@@ -1,22 +1,38 @@
 import matter from 'gray-matter';
 
 // Map folder prefixes to note types
+// Map folder prefixes to note types — supports both numbered (00_inbox) and unnumbered (inbox) prefixes
 const FOLDER_TYPE_MAP = {
   '00_inbox': 'inbox',
+  'inbox': 'inbox',
   '01_sources': 'source',
+  'sources': 'source',
   '02_projects': 'project',
+  'projects': 'project',
   '03_people': 'person',
+  'People': 'person',
   '04_companies': 'company',
+  'companies': 'company',
   '05_research': 'research',
+  'research': 'research',
   '06_ideas': 'idea',
+  'ideas': 'idea',
   '07_workflows': 'workflow',
+  'workflows': 'workflow',
   '08_agents': 'lesson',
+  'agents': 'lesson',
   '09_decisions': 'decision',
+  'decisions': 'decision',
   '10_runbooks': 'runbook',
   '11_builds/sessions': 'session',
+  'builds/sessions': 'session',
   '11_builds/fixes': 'fix',
+  'builds/fixes': 'fix',
   '11_builds': 'build',
+  'builds': 'build',
   '12_archive': 'archive',
+  'archive': 'archive',
+  'Clippings': 'source',
 };
 
 function inferTypeFromPath(vaultPath) {

@@ -33,5 +33,6 @@ export function cosineSimilarity(a, b) {
     magA += a[i] * a[i];
     magB += b[i] * b[i];
   }
-  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+  const mag = Math.sqrt(magA) * Math.sqrt(magB);
+  return mag === 0 ? 0 : dot / mag;
 }

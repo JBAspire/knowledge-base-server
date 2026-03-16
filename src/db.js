@@ -131,6 +131,8 @@ export function searchDocuments(query, limit = 20) {
     .map(term => `"${term}"`)
     .join(' ');
 
+  if (!sanitized) return [];
+
   const stmt = getDb().prepare(`
     SELECT d.id, d.title,
       snippet(documents_fts, 1, '<mark>', '</mark>', '...', 30) as snippet,

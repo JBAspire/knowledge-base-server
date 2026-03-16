@@ -7,6 +7,8 @@ import {
   getVaultFile, upsertVaultFile, deleteVaultFile, getAllVaultPaths,
 } from '../db.js';
 
+let indexing = false;
+
 const IGNORE_DIRS = new Set(['.obsidian', '.trash', '.git', '_assets', '_system', 'node_modules', 'textgenerator']);
 const IGNORE_FILES = new Set(['.DS_Store', 'Thumbs.db']);
 
@@ -41,6 +43,16 @@ function hashContent(content) {
 }
 
 export async function indexVault(vaultPath, { embeddings = false } = {}) {
+  if (indexing) return { indexed: 0, skipped: 0, deleted: 0, embedded: 0, errors: ['Index already in progress'], total: 0 };
+  indexing = true;
+  try {
+    return await _indexVault(vaultPath, { embeddings });
+  } finally {
+    indexing = false;
+  }
+}
+
+async function _indexVault(vaultPath, { embeddings = false } = {}) {
   const files = scanVault(vaultPath);
   const existingPaths = new Map(getAllVaultPaths().map(r => [r.vault_path, r.content_hash]));
   const seenPaths = new Set();

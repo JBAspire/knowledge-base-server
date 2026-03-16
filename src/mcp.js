@@ -141,7 +141,7 @@ export async function start() {
         writeFileSync(filePath, fm.join('\n') + '\n\n' + content);
 
         // Index immediately so the note is searchable right away
-        try { indexVault(vaultPath); } catch { /* non-fatal */ }
+        try { await indexVault(vaultPath); } catch { /* non-fatal */ }
 
         return { content: [{ type: 'text', text: `Note saved to ${folder}/${filename}` }] };
       } catch (err) {
@@ -186,7 +186,7 @@ export async function start() {
         const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
         if (!vaultPath) return { content: [{ type: 'text', text: 'Error: OBSIDIAN_VAULT_PATH not configured' }], isError: true };
         const result = captureYouTube({ title, url, transcript, channel, tags }, vaultPath);
-        try { indexVault(vaultPath); } catch { /* non-fatal */ }
+        try { await indexVault(vaultPath); } catch { /* non-fatal */ }
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       } catch (err) {
         return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
@@ -209,7 +209,7 @@ export async function start() {
         const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
         if (!vaultPath) return { content: [{ type: 'text', text: 'Error: OBSIDIAN_VAULT_PATH not configured' }], isError: true };
         const result = captureWeb({ title, url, content, tags, project }, vaultPath);
-        try { indexVault(vaultPath); } catch { /* non-fatal */ }
+        try { await indexVault(vaultPath); } catch { /* non-fatal */ }
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       } catch (err) {
         return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
@@ -235,7 +235,7 @@ export async function start() {
         const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
         if (!vaultPath) return { content: [{ type: 'text', text: 'Error: OBSIDIAN_VAULT_PATH not configured' }], isError: true };
         const result = captureSession({ goal, commands_failed, commands_worked, root_causes, fixes, lessons, project, machine }, vaultPath);
-        try { indexVault(vaultPath); } catch { /* non-fatal */ }
+        try { await indexVault(vaultPath); } catch { /* non-fatal */ }
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       } catch (err) {
         return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
@@ -260,7 +260,7 @@ export async function start() {
         const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
         if (!vaultPath) return { content: [{ type: 'text', text: 'Error: OBSIDIAN_VAULT_PATH not configured' }], isError: true };
         const result = captureFix({ title, symptom, cause, resolution, commands, project, stack }, vaultPath);
-        try { indexVault(vaultPath); } catch { /* non-fatal */ }
+        try { await indexVault(vaultPath); } catch { /* non-fatal */ }
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       } catch (err) {
         return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
