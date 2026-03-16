@@ -343,6 +343,59 @@ export async function start() {
     }
   );
 
+  server.tool(
+    'kb_context',
+    'Get a token-efficient briefing on a topic. Returns summaries and metadata for matching docs WITHOUT full content. Use this BEFORE kb_read to decide which docs are worth reading in full. Saves 90%+ tokens vs reading everything.',
+    {
+      query: z.string().describe('Topic or question to get context on'),
+      limit: z.number().optional().default(15).describe('Max docs to include'),
+      project: z.string().optional().describe('Filter by project'),
+      type: z.string().optional().describe('Filter by note type'),
+    },
+    async ({ query, limit, project, type }) => {
+      try {
+        const db = getDb();
+        // Get matching docs via FTS with summaries from vault_files
+        const ftsResults = searchDocuments(query, limit);
+
+        const briefings = ftsResults.map(r => {
+          const vf = db.prepare('SELECT vault_path, note_type, tags, project, summary, key_topics FROM vault_files WHERE document_id = ?').get(r.id);
+          return {
+            id: r.id,
+            title: r.title,
+            type: vf?.note_type || r.doc_type,
+            tags: vf?.tags || r.tags,
+            project: vf?.project || null,
+            summary: vf?.summary || r.snippet?.replace(/<\/?mark>/g, '').slice(0, 200),
+            key_topics: vf?.key_topics || null,
+          };
+        });
+
+        // Also add project/type filtered results if requested
+        if (project || type) {
+          let sql = 'SELECT vf.document_id as id, vf.title, vf.note_type, vf.tags, vf.project, vf.summary, vf.key_topics FROM vault_files vf WHERE 1=1';
+          const params = [];
+          if (project) { sql += ' AND vf.project = ?'; params.push(project); }
+          if (type) { sql += ' AND vf.note_type = ?'; params.push(type); }
+          sql += ' LIMIT ?';
+          params.push(limit);
+          const filtered = db.prepare(sql).all(...params);
+          const seenIds = new Set(briefings.map(b => b.id));
+          for (const f of filtered) {
+            if (!seenIds.has(f.id)) {
+              briefings.push({ id: f.id, title: f.title, type: f.note_type, tags: f.tags, project: f.project, summary: f.summary, key_topics: f.key_topics });
+            }
+          }
+        }
+
+        const header = `Found ${briefings.length} relevant docs. Use kb_read(id) for full content on any that look useful.`;
+        return { content: [{ type: 'text', text: header + '\n\n' + JSON.stringify(briefings, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
+      }
+    }
+  );
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

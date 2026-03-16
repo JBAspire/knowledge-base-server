@@ -31,6 +31,19 @@ const commands = {
       if (dryRun) console.log('(dry run — no changes written)');
     });
   },
+  summarize: () => {
+    const dryRun = args.includes('--dry-run');
+    const limitFlag = args.find(a => a.startsWith('--limit='));
+    const limit = limitFlag ? parseInt(limitFlag.split('=')[1]) : 0;
+    return import('../src/classify/summarizer.js').then(async m => {
+      const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
+      if (!vaultPath) { console.error('OBSIDIAN_VAULT_PATH not set'); process.exit(1); }
+      const result = await m.summarizeUnsummarized(vaultPath, { dryRun, limit });
+      console.log(`\nSummarized: ${result.summarized}/${result.total} notes`);
+      if (result.errors) console.log(`Errors: ${result.errors}`);
+      if (dryRun) console.log('(dry run — no changes written)');
+    });
+  },
   vault:    () => {
     const sub = args[0];
     if (sub === 'reindex') return import('../src/cli/vault-cli.js').then(m => m.vaultReindex());
@@ -52,6 +65,7 @@ Commands:
   status             Show stats and server status
   vault reindex      Reindex Obsidian vault
   classify           Auto-classify new clippings/inbox notes (--dry-run to preview)
+  summarize          Add AI summaries to docs without them (--dry-run, --limit=N)
   capture-x [path]   Capture X/Twitter bookmarks to vault
 `);
   process.exit(command ? 1 : 0);

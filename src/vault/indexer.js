@@ -132,6 +132,8 @@ async function _indexVault(vaultPath, { embeddings = false } = {}) {
         status: parsed.status,
         source: parsed.source,
         confidence: parsed.confidence,
+        summary: parsed.frontmatter.summary || null,
+        key_topics: parsed.frontmatter.key_topics || null,
       });
 
       // Generate embedding if enabled

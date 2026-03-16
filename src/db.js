@@ -64,6 +64,8 @@ function initSchema(db) {
       status TEXT DEFAULT 'active',
       source TEXT,
       confidence TEXT,
+      summary TEXT,
+      key_topics TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       indexed_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -71,6 +73,18 @@ function initSchema(db) {
     CREATE INDEX IF NOT EXISTS idx_vault_files_hash ON vault_files(content_hash);
     CREATE INDEX IF NOT EXISTS idx_vault_files_type ON vault_files(note_type);
     CREATE INDEX IF NOT EXISTS idx_vault_files_project ON vault_files(project);
+  `);
+
+  // Migration: add summary and key_topics columns if missing
+  const cols = db.prepare("PRAGMA table_info(vault_files)").all().map(c => c.name);
+  if (!cols.includes('summary')) {
+    db.prepare('ALTER TABLE vault_files ADD COLUMN summary TEXT').run();
+  }
+  if (!cols.includes('key_topics')) {
+    db.prepare('ALTER TABLE vault_files ADD COLUMN key_topics TEXT').run();
+  }
+
+  db.exec(`
 
     -- Embeddings for semantic search (stored as Float32Array binary blobs)
     CREATE TABLE IF NOT EXISTS embeddings (
@@ -201,10 +215,10 @@ export function getVaultFile(vaultPath) {
   return getDb().prepare('SELECT * FROM vault_files WHERE vault_path = ?').get(vaultPath);
 }
 
-export function upsertVaultFile({ vault_path, content_hash, document_id, title, note_type, tags, project, status, source, confidence }) {
+export function upsertVaultFile({ vault_path, content_hash, document_id, title, note_type, tags, project, status, source, confidence, summary, key_topics }) {
   const stmt = getDb().prepare(`
-    INSERT INTO vault_files (vault_path, content_hash, document_id, title, note_type, tags, project, status, source, confidence, indexed_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO vault_files (vault_path, content_hash, document_id, title, note_type, tags, project, status, source, confidence, summary, key_topics, indexed_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(vault_path) DO UPDATE SET
       content_hash = excluded.content_hash,
       document_id = excluded.document_id,
@@ -215,9 +229,11 @@ export function upsertVaultFile({ vault_path, content_hash, document_id, title, 
       status = excluded.status,
       source = excluded.source,
       confidence = excluded.confidence,
+      summary = excluded.summary,
+      key_topics = excluded.key_topics,
       indexed_at = CURRENT_TIMESTAMP
   `);
-  return stmt.run(vault_path, content_hash, document_id, title, note_type, tags || '', project, status, source, confidence);
+  return stmt.run(vault_path, content_hash, document_id, title, note_type, tags || '', project, status, source, confidence, summary || null, key_topics ? JSON.stringify(key_topics) : null);
 }
 
 export function deleteVaultFile(vaultPath) {
