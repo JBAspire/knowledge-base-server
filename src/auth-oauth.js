@@ -5,7 +5,7 @@ import Database from 'better-sqlite3';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const KB_DIR = join(homedir(), '.knowledge-base');
+const KB_DIR = process.env.KB_DATA_DIR || join(homedir(), '.knowledge-base');
 const AUTH_DB_PATH = join(KB_DIR, 'auth.db');
 
 export const auth = betterAuth({

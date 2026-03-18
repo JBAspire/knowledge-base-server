@@ -1,7 +1,7 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync, writeFileSync, unlinkSync, globSync } from 'fs';
+import { existsSync, writeFileSync, unlinkSync, readdirSync } from 'fs';
 import { homedir } from 'os';
 
 import { PID_PATH } from './paths.js';
@@ -47,7 +47,13 @@ export async function start() {
     const dirs = [join(home, 'knowledgebase')];
     // Add Claude memory dirs
     try {
-      const memoryDirs = globSync(join(home, '.claude/projects/*/memory'));
+      const claudeProjects = join(home, '.claude/projects');
+      const memoryDirs = existsSync(claudeProjects)
+        ? readdirSync(claudeProjects, { withFileTypes: true })
+            .filter(d => d.isDirectory())
+            .map(d => join(claudeProjects, d.name, 'memory'))
+            .filter(p => existsSync(p))
+        : [];
       dirs.push(...memoryDirs);
     } catch {}
     for (const dir of dirs) {
