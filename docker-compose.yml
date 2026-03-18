@@ -1,0 +1,26 @@
+services:
+  knowledge-base:
+    build: .
+    container_name: knowledge_base
+    hostname: knowledge-base
+    ports:
+      - "127.0.0.1:3838:3838"
+    volumes:
+      - kb_data:/data
+    environment:
+      - KB_PORT=3838
+      - KB_DATA_DIR=/data
+      - KB_PASSWORD=${KB_PASSWORD}
+      - KB_API_KEY_CLAUDE=${KB_API_KEY_CLAUDE:-}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3838/api/v1/search?q=health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  kb_data:
+    driver: local
